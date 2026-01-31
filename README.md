@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
@@ -48,3 +49,81 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+=======
+# 🚀 JobPortalApp – AMD Final Project
+
+## 📱 Project Overview
+**App Name:** JobPortalApp  
+**Platform:** Android + iOS  
+**Framework:** Expo (React Native)
+
+JobPortalApp kiyanne **Job Portal Mobile Application** ekak.  
+Me application eken users la ta:
+
+- Account create karanna (Signup)
+- Login wenna
+- Job listings balanna
+- Job details view karanna
+- Job create / update / delete karanna
+
+👉 **CRUD + Authentication + Navigation + State Management** siyalla include  
+👉 **100% AMD Coursework Requirements covered ✅**
+
+---
+
+## 🛠 Tech Stack
+
+| Area | Technology |
+|----|----|
+| Frontend | React Native + Expo |
+| Navigation | Expo Router (File-based Routing) |
+| State Management | React Context API |
+| Backend (BaaS) | Firebase |
+| Authentication | Firebase Authentication |
+| Database | Firebase Firestore |
+| Styling | NativeWind (Tailwind CSS) |
+| Build Tool | EAS (APK / AAB) |
+
+---
+
+## ✨ Application Features
+
+✔ User Signup  
+✔ User Login  
+✔ Authentication State Management  
+✔ Job List (READ)  
+✔ Job Details Page  
+✔ Create Job (CREATE)  
+✔ Update Job (UPDATE)  
+✔ Delete Job (DELETE)  
+✔ Stack Navigation  
+✔ Tab Navigation  
+
+---
+
+## 📁 Project Structure  
+**(Expo Router – Separation of Concerns Best Practice)**
+
+
+<img width="900" height="800" alt="ChatGPT Image Jan 30, 2026, 05_20_29 PM" src="https://github.com/user-attachments/assets/e603d10f-6aa6-4e3e-a0c3-38fa6f69fe21" />
+
+👉 **Separation of Concerns (SoC)** implemented  
+👉 **Expo Router file-based navigation** used  
+👉 **AMD Day 4 – Architecture Best Practices followed** ✅
+
+
+
+## Create Expo Project
+
+**bash**
+- npx create-expo-app@latest JobPortalApp
+- cd JobPortalApp
+
+**Install required libs:**
+- npx expo install firebase
+- npx expo install expo-router
+- npm install nativewind
+
+
+
+>>>>>>> 6d27654a8790071c50a14c94e08221a553fbea13
