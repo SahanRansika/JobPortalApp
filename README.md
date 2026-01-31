@@ -105,12 +105,13 @@ Me application eken users la ta:
 **(Expo Router – Separation of Concerns Best Practice)**
 
 
-<img width="900" height="800" alt="ChatGPT Image Jan 30, 2026, 05_20_29 PM" src="https://github.com/user-attachments/assets/e603d10f-6aa6-4e3e-a0c3-38fa6f69fe21" />
+
 
 👉 **Separation of Concerns (SoC)** implemented  
 👉 **Expo Router file-based navigation** used  
 👉 **AMD Day 4 – Architecture Best Practices followed** ✅
 
+<img width="700" height="600" alt="ChatGPT Image Jan 30, 2026, 05_20_29 PM" src="https://github.com/user-attachments/assets/3f9f25c9-79a7-48f9-9ee9-03a0f7b3a1fb" />
 
 
 ## Create Expo Project
@@ -124,6 +125,3 @@ Me application eken users la ta:
 - npx expo install expo-router
 - npm install nativewind
 
-
-
->>>>>>> 6d27654a8790071c50a14c94e08221a553fbea13
