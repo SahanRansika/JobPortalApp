@@ -1,33 +1,11 @@
-import { Stack } from "expo-router";
-import { AuthProvider, useAuth } from "../context/AuthContext";
-import { ActivityIndicator, View } from "react-native";
+import { Tabs } from "expo-router";
 
-function RootLayoutNav() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
+export default function TabLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {!user ? (
-        <Stack.Screen name="(auth)" />
-      ) : (
-        <Stack.Screen name="(tabs)" />
-      )}
-    </Stack>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <Tabs>
+      <Tabs.Screen name="home" />
+      <Tabs.Screen name="create-job" />
+      <Tabs.Screen name="profile" />
+    </Tabs>
   );
 }
