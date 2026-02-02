@@ -1,11 +1,19 @@
-import { Tabs } from "expo-router";
+import { Slot } from "expo-router"
+import React from "react"
+import { View } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import {LoaderProvider} from "@/context/LoaderContext"
 
-export default function TabLayout() {
+const RootLayout = () => {
+  const insets = useSafeAreaInsets()
+  console.log(insets)
   return (
-    <Tabs>
-      <Tabs.Screen name="home" />
-      <Tabs.Screen name="create-job" />
-      <Tabs.Screen name="profile" />
-    </Tabs>
-  );
+    <LoaderProvider>
+      <View style={{ marginTop: insets.top, flex: 1 }}>
+        <Slot />
+      </View>
+    </LoaderProvider>
+  )
 }
+
+export default RootLayout
