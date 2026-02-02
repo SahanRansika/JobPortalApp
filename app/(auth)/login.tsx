@@ -114,7 +114,7 @@ export default function Login() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                onPress={() => navigation.navigate('Signup' as never)} 
+                onPress={() => navigation.navigate('signup' as never)} 
                 style={styles.signupLink}
               >
                 <Text style={styles.footerText}>
