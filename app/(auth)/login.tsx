@@ -1,20 +1,20 @@
-import { 
-  View, 
-  TextInput, 
-  Text, 
+import { useNavigation } from "@react-navigation/native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
   Image,
-  TouchableOpacity, 
-  StyleSheet, 
-  Dimensions, 
-  KeyboardAvoidingView, 
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/firebase";
-import { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { auth } from "../../services/firebase";
 
 const { width } = Dimensions.get('window');
 const isLargeScreen = width > 768;

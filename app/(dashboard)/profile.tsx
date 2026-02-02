@@ -3,16 +3,16 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { signOut } from "firebase/auth";
 import React from 'react';
 import {
-    Alert, Dimensions,
-    Image,
-    ImageBackground,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert, Dimensions,
+  Image,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { auth } from "../../firebase/firebase";
+import { auth } from "../../services/firebase";
 
 interface ProfileProps {
   navigation: NativeStackNavigationProp<any>;

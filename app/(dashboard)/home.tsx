@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Dimensions, FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { getJobs } from "../../services/jobService";
+import { push } from "expo-router/build/global-state/routing";
 
 const { width } = Dimensions.get('window');
 const isTablet = width > 768;
+
 
 export default function Home() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -26,10 +28,10 @@ export default function Home() {
         </View>
 
         <View style={styles.navRight}>
-          <TouchableOpacity style={styles.loginBtn}>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => push('login' as never)} >
             <Text style={styles.loginText}>Login</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.signupBtn}>
+          <TouchableOpacity style={styles.signupBtn} onPress={() => push('signup' as never)} >
             <Text style={styles.signupText}>Signup</Text>
           </TouchableOpacity>
         </View>

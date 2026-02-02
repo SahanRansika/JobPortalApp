@@ -1,21 +1,21 @@
+import { useNavigation } from "@react-navigation/native";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
-import { 
-  View, 
-  TextInput, 
-  Text, 
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
   Image,
-  TouchableOpacity, 
-  StyleSheet, 
-  Dimensions, 
-  KeyboardAvoidingView, 
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
-  Alert
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/firebase";
-import { useNavigation } from "@react-navigation/native";
+import { auth } from "../../services/firebase";
 
 const { width } = Dimensions.get('window');
 const isLargeScreen = width > 768;

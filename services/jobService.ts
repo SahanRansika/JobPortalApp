@@ -1,5 +1,5 @@
-import { collection, addDoc, getDocs } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { addDoc, collection, getDocs } from "firebase/firestore";
+import { db } from "./firebase";
 
 const jobsRef = collection(db, "jobs");
 
