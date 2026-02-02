@@ -1,10 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform 
+import {
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView, Platform,
+    ScrollView,
+    StyleSheet,
+    Text, TextInput, TouchableOpacity,
+    View
 } from "react-native";
 import { addJob } from "../../services/jobService";
-import { Ionicons } from '@expo/vector-icons';
 
 export default function CreateJob({ navigation }: any) {
   const [title, setTitle] = useState("");

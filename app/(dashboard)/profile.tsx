@@ -1,12 +1,18 @@
-import React from 'react';
-import { 
-  View, Text, Image, TouchableOpacity, StyleSheet, 
-  ScrollView, Alert, Dimensions, ImageBackground 
-} from "react-native";
-import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebase";
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { signOut } from "firebase/auth";
+import React from 'react';
+import {
+    Alert, Dimensions,
+    Image,
+    ImageBackground,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
+import { auth } from "../../firebase/firebase";
 
 interface ProfileProps {
   navigation: NativeStackNavigationProp<any>;

@@ -1,5 +1,5 @@
-import { View, Text, FlatList, StyleSheet, Dimensions, Image, TouchableOpacity, ImageBackground } from "react-native";
 import { useEffect, useState } from "react";
+import { Dimensions, FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { getJobs } from "../../services/jobService";
 
 const { width } = Dimensions.get('window');
