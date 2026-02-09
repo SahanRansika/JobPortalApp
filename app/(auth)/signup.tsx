@@ -37,12 +37,14 @@ export default function Signup() {
 
   /* ---------------- GOOGLE AUTH ---------------- */
 const [request, response, promptAsync] = Google.useAuthRequest({
-  clientId: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+  webClientId: "270825751134-fcfspm30u9qv9tipdkg4471ge37ujg6q.apps.googleusercontent.com",
+  androidClientId: "ANDROID_CLIENT_ID.apps.googleusercontent.com",
 });
+
 
 useEffect(() => {
   if (response?.type === "success") {
-    const idToken = response.params.id_token;
+    const { idToken } = response.authentication || {};
 
     if (!idToken) {
       Alert.alert("Error", "Google ID token not found");
@@ -52,8 +54,13 @@ useEffect(() => {
     const credential = GoogleAuthProvider.credential(idToken);
 
     signInWithCredential(auth, credential)
-      .then(() => Alert.alert("Success", "Signed in with Google"))
-      .catch(() => Alert.alert("Error", "Google sign-in failed"));
+      .then(() => {
+        Alert.alert("Success", "Signed in with Google");
+      })
+      .catch((error) => {
+        console.log(error);
+        Alert.alert("Error", "Google sign-in failed");
+      });
   }
 }, [response]);
 
@@ -162,15 +169,15 @@ useEffect(() => {
             {/* SOCIAL LOGIN ROW */}
             <View style={styles.socialRow}>
               <TouchableOpacity onPress={() => promptAsync()}>
-                <Image source={require("./google.png")} style={styles.socialIcon} />
+                <Image source={require("../../assets/google.png")} style={styles.socialIcon} />
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => Alert.alert("Info", "Facebook login coming soon")}>
-                <Image source={require("./facebook.png")} style={styles.socialIcon} />
+                <Image source={require("../../assets/facebook.png")} style={styles.socialIcon} />
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => Alert.alert("Info", "LinkedIn login coming soon")}>
-                <Image source={require("./linkedin.png")} style={styles.socialIcon} />
+                <Image source={require("../../assets/linkedin.png")} style={styles.socialIcon} />
               </TouchableOpacity>
             </View>
 

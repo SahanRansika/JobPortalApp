@@ -1,17 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from "expo-router";
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    KeyboardAvoidingView, Platform,
+    KeyboardAvoidingView, 
+    Platform,
     ScrollView,
     StyleSheet,
-    Text, TextInput, TouchableOpacity,
+    Text, 
+    TextInput, 
+    TouchableOpacity,
     View
 } from "react-native";
 import { addJob } from "../../services/jobService";
 
-export default function CreateJob({ navigation }: any) {
+export default function CreateJob() {
+  const router = useRouter(); // navigation වෙනුවට router පාවිච්චි කරමු
+
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [salary, setSalary] = useState("");
@@ -27,6 +33,7 @@ export default function CreateJob({ navigation }: any) {
 
     setLoading(true);
     try {
+      // නව Job එක සේව් කිරීම
       await addJob({ 
         title, 
         company, 
@@ -37,14 +44,20 @@ export default function CreateJob({ navigation }: any) {
       });
       
       Alert.alert("Success", "Job posted successfully!", [
-        { text: "OK", onPress: () => navigation.goBack() }
+        { 
+          text: "OK", 
+          onPress: () => {
+            // Form එක clear කිරීම
+            setTitle("");
+            setCompany("");
+            setSalary("");
+            setDescription("");
+            // Home එකට auto යැවීම
+            router.push("/home" as any);
+          } 
+        }
       ]);
       
-      // Form එක clear කිරීම
-      setTitle("");
-      setCompany("");
-      setSalary("");
-      setDescription("");
     } catch (error) {
       Alert.alert("Error", "Failed to save job. Please try again.");
       console.error(error);
@@ -124,10 +137,10 @@ export default function CreateJob({ navigation }: any) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <>
+              <View style={styles.btnContent}>
                 <Ionicons name="cloud-upload-outline" size={22} color="#fff" />
                 <Text style={styles.saveButtonText}>Post This Job</Text>
-              </>
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -142,14 +155,40 @@ const styles = StyleSheet.create({
   header: { marginBottom: 25, marginTop: 10 },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   headerSubtitle: { fontSize: 14, color: '#666', marginTop: 5 },
-  form: { backgroundColor: '#fff', borderRadius: 20, padding: 20, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
+  form: { 
+    backgroundColor: '#fff', 
+    borderRadius: 20, 
+    padding: 20, 
+    elevation: 4, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 8 
+  },
   label: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 8, marginLeft: 4 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f3f5', borderRadius: 12, paddingHorizontal: 15, marginBottom: 20, borderWidth: 1, borderColor: '#e9ecef' },
+  inputContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#f1f3f5', 
+    borderRadius: 12, 
+    paddingHorizontal: 15, 
+    marginBottom: 20, 
+    borderWidth: 1, 
+    borderColor: '#e9ecef' 
+  },
   icon: { marginRight: 10 },
   input: { flex: 1, paddingVertical: 12, fontSize: 16, color: '#333' },
   textAreaContainer: { alignItems: 'flex-start', paddingVertical: 10 },
   textArea: { height: 100 },
-  saveButton: { backgroundColor: '#007AFF', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 16, borderRadius: 12, marginTop: 10 },
+  btnContent: { flexDirection: 'row', alignItems: 'center' },
+  saveButton: { 
+    backgroundColor: '#007AFF', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 16, 
+    borderRadius: 12, 
+    marginTop: 10 
+  },
   saveButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
   disabledButton: { backgroundColor: '#ccc' }
 });

@@ -20,9 +20,9 @@ export const registerUser =async (
     await updateProfile(userCredential.user,{displayName:fullName})
     await setDoc(doc(db, "users", userCredential.user.uid), {
         name: fullName,
-        role: "",
+        role: "jobseeker",
         email,
-        createAt: new Date()
+        createdAt: new Date()
     })
     return userCredential.user;
     }

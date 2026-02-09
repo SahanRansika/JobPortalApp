@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { signOut } from "firebase/auth";
+import { useRouter } from "expo-router"; 
 import React from 'react';
 import {
-  Alert, Dimensions,
+  Alert, 
+  Dimensions,
   Image,
   ImageBackground,
   ScrollView,
@@ -14,14 +15,23 @@ import {
 } from "react-native";
 import { auth } from "../../services/firebase";
 
-interface ProfileProps {
-  navigation: NativeStackNavigationProp<any>;
-}
-
 const { width } = Dimensions.get('window');
 
-export default function Profile({ navigation }: ProfileProps) {
-  
+export default function Profile() {
+  const router = useRouter();
+
+  // පරිශීලකයාගේ නම ලබාගැනීම
+  const getUserName = () => {
+    const user = auth.currentUser;
+    if (user?.displayName) return user.displayName;
+    if (user?.email) {
+      const namePart = user.email.split('@')[0];
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+    return "Job Seeker";
+  };
+
+  // Logout වීමේ function එක
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -33,7 +43,7 @@ export default function Profile({ navigation }: ProfileProps) {
           onPress: async () => {
             try {
               await signOut(auth);
-              navigation.replace('Login'); 
+              router.replace("/login" as any); 
             } catch (error) {
               Alert.alert("Error", "Logout failed.");
             }
@@ -47,28 +57,24 @@ export default function Profile({ navigation }: ProfileProps) {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
-      {/* Header Section with Background Image */}
-      <ImageBackground 
-        source={{ uri: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174' }} 
-        style={styles.headerBackground}
-        borderBottomLeftRadius={40}
-        borderBottomRightRadius={40}
-      >
-        {/* Overlay - අකුරු පැහැදිලිව පෙනීමට */}
+      {/* Header කොටස */}
+      
         <View style={styles.overlay}>
           <View style={styles.profileImageContainer}>
             <Image 
               source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }} 
               style={styles.profileImage}
             />
-            <TouchableOpacity style={styles.editIcon}>
+            {/* Edit Icon එක එබූ විට Edit Profile වෙත යයි */}
+            <TouchableOpacity 
+              style={styles.editIcon}
+              onPress={() => router.push("/edit-profile" as any)}
+            >
               <Ionicons name="camera" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.userName}>
-            {auth.currentUser?.displayName || "Job Seeker"}
-          </Text>
+          <Text style={styles.userName}>{getUserName()}</Text>
           <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
           
           <View style={styles.statsContainer}>
@@ -83,13 +89,16 @@ export default function Profile({ navigation }: ProfileProps) {
             </View>
           </View>
         </View>
-      </ImageBackground>
 
-      {/* Settings Options Section */}
+      {/* Settings කොටස */}
       <View style={styles.infoSection}>
         <Text style={styles.sectionTitle}>Account Settings</Text>
         
-        <TouchableOpacity style={styles.infoRow} onPress={() => navigation.navigate('EditProfile')}>
+        {/* Edit Profile button එක */}
+        <TouchableOpacity 
+          style={styles.infoRow}
+          onPress={() => router.push("/edit-profile" as any)}
+        >
           <View style={[styles.iconBackground, { backgroundColor: '#E3F2FD' }]}>
             <Ionicons name="person-outline" size={22} color="#007AFF" />
           </View>
@@ -128,19 +137,10 @@ export default function Profile({ navigation }: ProfileProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fdfdfd' },
-  headerBackground: { 
-    width: '100%', 
-    height: 320, 
-    overflow: 'hidden',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
+  headerBackground: { width: '100%', height: 320 },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 122, 255, 0.7)', // Blue tint with transparency
+    backgroundColor: 'rgba(0, 80, 255, 0.65)', 
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 40,
@@ -158,10 +158,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: '#fff'
-  },userEmail: { fontSize: 14, color: '#f0f0f0', marginTop: 2, opacity: 0.9 },
+  },
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 10 },
-  
-  
+  userEmail: { fontSize: 14, color: '#f0f0f0', marginTop: 2, opacity: 0.9 },
   statsContainer: { 
     flexDirection: 'row', 
     marginTop: 20, 
@@ -174,9 +173,8 @@ const styles = StyleSheet.create({
   statNumber: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   statLabel: { color: '#fff', fontSize: 11, opacity: 0.9 },
   statDivider: { width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.3)' },
-
   infoSection: { padding: 25 },
-  sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#999', marginBottom: 15, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 12, fontWeight: 'bold', color: '#999', marginBottom: 15, textTransform: 'uppercase' },
   infoRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -184,17 +182,11 @@ const styles = StyleSheet.create({
     padding: 16, 
     borderRadius: 18, 
     marginBottom: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    elevation: 2,
   },
   iconBackground: { width: 42, height: 42, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   infoText: { flex: 1, marginLeft: 15, fontSize: 15, color: '#333', fontWeight: '600' },
-  
   divider: { height: 1, backgroundColor: '#f0f0f0', marginVertical: 15 },
-  
   logoutButton: { 
     flexDirection: 'row', 
     justifyContent: 'center', 
@@ -203,7 +195,7 @@ const styles = StyleSheet.create({
     padding: 16, 
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#FFD2D2'
+    borderColor: '#FFD2D2',
   },
   logoutText: { color: '#FF3B30', fontWeight: 'bold', marginLeft: 10, fontSize: 15 },
   versionText: { textAlign: 'center', color: '#bbb', marginVertical: 20, fontSize: 11 }

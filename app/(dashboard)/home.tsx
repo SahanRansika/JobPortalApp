@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { Dimensions, FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { getJobs } from "../../services/jobService";
-import { push } from "expo-router/build/global-state/routing";
 import { auth } from "@/services/firebase";
 
 const { width } = Dimensions.get('window');
 const isTablet = width > 768;
-
 
 export default function Home() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -14,6 +12,16 @@ export default function Home() {
   useEffect(() => {
     getJobs().then(setJobs);
   }, []);
+
+  const getUserName = () => {
+    const user = auth.currentUser;
+    if (user?.displayName) return user.displayName;
+    if (user?.email) {
+      const namePart = user.email.split('@')[0];
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+    return "Guest User";
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
@@ -29,7 +37,10 @@ export default function Home() {
         </View>
 
         <View style={styles.navRight}>
-           <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
+           <View style={styles.userInfo}>
+             <Text style={styles.userGreeting}>Hello,</Text>
+             <Text style={styles.userNameText}>{getUserName()}</Text>
+           </View>
         </View>
       </View>
 
@@ -38,13 +49,13 @@ export default function Home() {
         numColumns={isTablet ? 2 : 1}
         keyExtractor={(item) => item.id}
         
-        // --- 2. Hero Section (ListHeaderComponent widiyata danna puluwan) ---
         ListHeaderComponent={
           <View>
             <ImageBackground 
-              source={{ uri: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80' }} // Office environments image
+              source={{ uri: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80' }} 
               style={styles.heroBanner}
             >
+              {/* MEHI VIEW LESATA HADAA THIYEY */}
               <View style={styles.heroOverlay}>
                 <Text style={styles.heroTitle}>Find Your Dream Job Today</Text>
                 <Text style={styles.heroSub}>Explore over 1000+ new opportunities</Text>
@@ -65,7 +76,6 @@ export default function Home() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardRow}>
-               {/* Job icon image ekak */}
               <Image 
                 source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3850/3850285.png' }} 
                 style={styles.jobIcon}
@@ -91,14 +101,14 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  // Nav Styles
   navBar: {
     flexDirection: 'row',
-    height: 75,
+    height: 80,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    paddingTop: 10,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -109,20 +119,14 @@ const styles = StyleSheet.create({
   logo: { width: 30, height: 30, marginRight: 10 },
   brandName: { fontSize: 20, fontWeight: 'bold', color: '#007AFF' },
   navRight: { flexDirection: 'row', alignItems: 'center' },
-  loginBtn: { marginRight: 15 },
-  loginText: { color: '#007AFF', fontWeight: '600' },
-  signupBtn: { backgroundColor: '#007AFF', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 8 },
-  signupText: { color: '#fff', fontWeight: '600' },
+  userInfo: { alignItems: 'flex-end' },
+  userGreeting: { fontSize: 12, color: '#64748B' },
+  userNameText: { fontSize: 15, fontWeight: 'bold', color: '#1E293B' },
 
-  // Hero Section Styles
-  heroBanner: {
-    width: '100%',
-    height: 220,
-    marginBottom: 20,
-  },
+  heroBanner: { width: '100%', height: 220, marginBottom: 20 },
   heroOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 51, 102, 0.6)', // Dark blue overlay
+    backgroundColor: 'rgba(0, 51, 102, 0.6)',
     justifyContent: 'center',
     padding: 25,
   },
@@ -136,11 +140,8 @@ const styles = StyleSheet.create({
     marginTop: 15,
     alignItems: 'center',
   },
-  exploreBtnText: { color: '#007AFF', fontWeight: 'bold' }
-  ,userEmail: { fontSize: 14, color: '#0073ff', marginTop: 2, opacity: 0.9 },
-  userName: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 10 },
+  exploreBtnText: { color: '#007AFF', fontWeight: 'bold' },
 
-  // List Section Styles
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -151,7 +152,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
   viewAll: { color: '#007AFF', fontWeight: '600' },
 
-  // Card Styles
   card: {
     backgroundColor: 'white',
     padding: 15,

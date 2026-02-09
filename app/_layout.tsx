@@ -1,13 +1,20 @@
-import { Slot } from "expo-router";
-import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AuthProvider } from "../context/AuthContext";
+import { LoaderProvider } from "../context/LoaderContext";
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View style={{ flex: 1, marginTop: insets.top }}>
-      <Slot />
-    </View>
+    <LoaderProvider>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Auth Group */}
+          <Stack.Screen name="(auth)" />
+          {/* Main App Tabs Group */}
+          <Stack.Screen name="(tabs)" />
+          {/* Modals or other screens */}
+          <Stack.Screen name="job-details/[id]" options={{ presentation: 'modal', headerShown: true, title: "Job Details" }} />
+        </Stack>
+      </AuthProvider>
+    </LoaderProvider>
   );
 }
