@@ -7,43 +7,64 @@ import {
   StyleSheet, 
   Text, 
   TouchableOpacity, 
-  View 
+  View,
+  ActivityIndicator,
+  RefreshControl,
+  Platform
 } from "react-native";
 import { getJobs } from "../../services/jobService";
-import { auth } from "../../services/firebase"; // ඔබගේ firebase path එක පරීක්ෂා කරන්න
+import { auth } from "../../services/firebase";
 import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get('window');
-const isTablet = width > 768;
 
 export default function Home() {
   const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
+  // Firebase එකෙන් Jobs ලබා ගැනීම
+  const fetchJobs = async () => {
+    try {
+      const data = await getJobs();
+      setJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    getJobs().then(setJobs);
+    fetchJobs();
   }, []);
 
-  // පරිශීලකයාගේ නම ලබා ගැනීම
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchJobs();
+  };
+
   const getUserName = () => {
     const user = auth.currentUser;
     if (user?.displayName) return user.displayName;
-    if (user?.email) {
-      const namePart = user.email.split('@')[0];
-      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    }
-    return "Guest User";
+    return user?.email?.split('@')[0] || "User";
   };
 
-  // පරිශීලකයාගේ පින්තූරය ලබා ගැනීම (නැතිනම් default එකක් පෙන්වීම)
-  const getUserImage = () => {
-    return auth.currentUser?.photoURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-  };
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={{ marginTop: 10, color: '#64748B' }}>Loading jobs...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       
-      {/* --- 1. Top Navigation Bar --- */}
+      {/* --- Header Section --- */}
       <View style={styles.navBar}>
         <View style={styles.navLeft}>
           <Image 
@@ -55,167 +76,153 @@ export default function Home() {
 
         <View style={styles.navRight}>
           <View style={styles.userInfo}>
-            <Text style={styles.userGreeting}>Hello,</Text>
+            <Text style={styles.userGreeting}>Welcome back,</Text>
             <Text style={styles.userNameText}>{getUserName()}</Text>
           </View>
-          
-          {/* Profile Image එක මෙතැනට එක් කරන ලදි */}
-          <TouchableOpacity onPress={() => router.push("/profile" as any)}>
-            <Image 
-              source={{ uri: getUserImage() }} 
-              style={styles.userAvatar} 
-            />
-          </TouchableOpacity>
+          <Image 
+            source={{ uri: auth.currentUser?.photoURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }} 
+            style={styles.userAvatar} 
+          />
         </View>
       </View>
 
       <FlatList
         data={jobs}
-        numColumns={isTablet ? 2 : 1}
         keyExtractor={(item) => item.id}
-        
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListHeaderComponent={
           <View>
             <ImageBackground 
-              source={{ uri: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80' }} 
+              source={{ uri: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80' }} 
               style={styles.heroBanner}
+              imageStyle={{ borderRadius: 0 }}
             >
               <View style={styles.heroOverlay}>
-                <Text style={styles.heroTitle}>Find Your Dream Job Today</Text>
-                <Text style={styles.heroSub}>Explore over 1000+ new opportunities</Text>
-                
-                <TouchableOpacity style={styles.exploreBtn}>
-                  <Text style={styles.exploreBtnText}>Browse Categories</Text>
-                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Grow Your Career</Text>
+                <Text style={styles.heroSub}>Find the perfect job for your skills</Text>
               </View>
             </ImageBackground>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.headerTitle}>Recent Job Openings</Text>
-              <TouchableOpacity>
-                <Text style={styles.viewAll}>View All</Text>
+              <Text style={styles.headerTitle}>Latest Job Posts</Text>
+              <TouchableOpacity onPress={onRefresh}>
+                <Text style={styles.viewAll}>Refresh</Text>
               </TouchableOpacity>
             </View>
           </View>
         }
-
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => router.push({
+              pathname: "/(dashboard)/show-job",
+              params: { 
+                id: item.id,
+                title: item.title,
+                company: item.company,
+                salary: item.salary,
+                description: item.description,
+                imageUrl: item.imageUrl 
+              }
+            } as any)}
+          >
             <View style={styles.cardRow}>
+              {/* Cloudinary URL එක හරහා එන Image එක */}
               <Image 
-                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3850/3850285.png' }} 
+                source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} 
                 style={styles.jobIcon}
               />
               <View style={{ flex: 1 }}>
                 <Text style={styles.jobTitle}>{item.title}</Text>
-                <Text style={styles.companyName}>Tech Solutions Inc.</Text>
+                <Text style={styles.companyName}>{item.company}</Text>
               </View>
             </View>
             
             <View style={styles.footerRow}>
-              <Text style={styles.dateText}>📅 {new Date(item.createdAt).toLocaleDateString()}</Text>
-              <TouchableOpacity 
-                style={styles.applyBtn}
-                onPress={() => router.push({ pathname: "/job-details/[id]", params: { id: item.id } } as any)}
-              >
-                <Text style={styles.applyText}>Apply</Text>
-              </TouchableOpacity>
+              <View>
+                <Text style={styles.salaryText}>💰 LKR {item.salary}</Text>
+                <Text style={styles.dateText}>📅 {new Date(item.createdAt).toLocaleDateString()}</Text>
+              </View>
+              <View style={styles.detailsBtn}>
+                <Text style={styles.detailsText}>View Details</Text>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
-        contentContainerStyle={{ paddingBottom: 100 }} // Tab bar එකට වැසීම වැළැක්වීමට
+        ListEmptyComponent={
+          <View style={styles.center}>
+            <Text style={{ color: '#64748B' }}>No jobs available at the moment.</Text>
+          </View>
+        }
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navBar: {
-    flexDirection: 'row',
-    height: 90,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    elevation: 4,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  navBar: { 
+    flexDirection: 'row', 
+    height: Platform.OS === 'ios' ? 110 : 90, 
+    backgroundColor: '#fff', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20, 
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    zIndex: 10,
+    shadowRadius: 5
   },
   navLeft: { flexDirection: 'row', alignItems: 'center' },
+  navRight: { flexDirection: 'row', alignItems: 'center' },
   logo: { width: 30, height: 30, marginRight: 10 },
   brandName: { fontSize: 20, fontWeight: 'bold', color: '#007AFF' },
-  navRight: { flexDirection: 'row', alignItems: 'center' },
   userInfo: { alignItems: 'flex-end', marginRight: 12 },
-  userGreeting: { fontSize: 11, color: '#64748B', textTransform: 'uppercase' },
+  userGreeting: { fontSize: 10, color: '#64748B', textTransform: 'uppercase' },
   userNameText: { fontSize: 15, fontWeight: 'bold', color: '#1E293B' },
-  userAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#007AFF',
-  },
-
-  heroBanner: { width: '100%', height: 220, marginBottom: 20 },
-  heroOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 51, 102, 0.6)',
-    justifyContent: 'center',
-    padding: 25,
-  },
+  userAvatar: { width: 42, height: 42, borderRadius: 21, borderWidth: 1.5, borderColor: '#007AFF' },
+  
+  heroBanner: { width: '100%', height: 180, marginBottom: 20 },
+  heroOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 25 },
   heroTitle: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
-  heroSub: { color: '#ddd', fontSize: 16, marginTop: 5 },
-  exploreBtn: {
-    backgroundColor: '#fff',
-    width: 160,
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  exploreBtnText: { color: '#007AFF', fontWeight: 'bold' },
+  heroSub: { color: '#eee', fontSize: 15, marginTop: 4 },
 
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 12 },
+  headerTitle: { fontSize: 19, fontWeight: 'bold', color: '#1E293B' },
   viewAll: { color: '#007AFF', fontWeight: '600' },
 
-  card: {
-    backgroundColor: 'white',
-    padding: 15,
-    marginHorizontal: 15,
-    marginVertical: 8,
-    borderRadius: 15,
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 2,
+  card: { 
+    backgroundColor: '#fff', 
+    marginHorizontal: 18, 
+    marginVertical: 10, 
+    padding: 18, 
+    borderRadius: 20, 
+    elevation: 4, 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8
   },
-  cardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  jobIcon: { width: 50, height: 50, borderRadius: 12, marginRight: 15, backgroundColor: '#F0F7FF' },
+  cardRow: { flexDirection: 'row', alignItems: 'center' },
+  jobIcon: { width: 60, height: 60, borderRadius: 14, marginRight: 15, backgroundColor: '#F1F5F9' },
   jobTitle: { fontSize: 17, fontWeight: 'bold', color: '#1E293B' },
-  companyName: { color: '#64748B', fontSize: 14, marginTop: 2 },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+  companyName: { color: '#64748B', fontSize: 14, marginTop: 3 },
+  
+  footerRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 15, 
+    borderTopWidth: 1, 
+    borderTopColor: '#F1F5F9', 
     paddingTop: 12,
+    alignItems: 'center'
   },
-  dateText: { color: '#94A3B8', fontSize: 13 },
-  applyBtn: { backgroundColor: '#007AFF', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
-  applyText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  salaryText: { color: '#10B981', fontSize: 15, fontWeight: 'bold' },
+  dateText: { color: '#94A3B8', fontSize: 12, marginTop: 2 },
+  detailsBtn: { backgroundColor: '#E0F2FE', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
+  detailsText: { color: '#007AFF', fontWeight: 'bold', fontSize: 13 }
 });

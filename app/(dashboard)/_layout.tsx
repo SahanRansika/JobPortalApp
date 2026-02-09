@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native"; // OS එක අනුව වෙනස් කිරීමට
+import { Ionicons, AntDesign } from "@expo/vector-icons"; // AntDesign import කරන්න
+import { Platform } from "react-native";
 
 export default function TabsLayout() {
   return (
@@ -8,16 +8,16 @@ export default function TabsLayout() {
       tabBarActiveTintColor: "#007AFF",
       headerShown: false,
       tabBarStyle: { 
-        height: Platform.OS === 'ios' ? 95 : 95, // උස මඳක් වැඩි කරන ලදි
-        paddingBottom: Platform.OS === 'ios' ? 30 : 15, // පහළින් ඉඩ තැබීම
+        height: Platform.OS === 'ios' ? 90 : 95, 
+        paddingBottom: Platform.OS === 'ios' ? 30 : 12,
         paddingTop: 10,
-        position: 'absolute', // මෙනු එක පාවෙන ස්වභාවයක් ලබා දීමට
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        position: 'absolute',
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
         backgroundColor: '#ffffff',
-        elevation: 10, // Android shadow
-        shadowColor: '#000', // iOS shadow
-        shadowOffset: { width: 0, height: -2 },
+        elevation: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -3 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
       }
@@ -26,25 +26,34 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
         }}
       />
+      
+      {/* Show Job සඳහා AntDesign Icon එක ඇතුළත් කිරීම */}
+      <Tabs.Screen
+        name="show-job"
+        options={{
+          title: "View Jobs",
+          tabBarIcon: ({ color }) => <AntDesign name="appstore-add" size={24} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="create-job"
+        options={{
+          title: "Create Post",
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={30} color={color} />,
+        }}
+      />
+
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="create-job"
-        options={{
-          title: "Create Job",
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
         }}
       />
     </Tabs>
   );
 }
-
-// <AntDesign name="appstore-add" size={24} color="black" />
