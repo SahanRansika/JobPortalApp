@@ -1,8 +1,6 @@
-import { useNavigation } from "@react-navigation/native";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import React, { useEffect, useState } from "react";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,61 +11,28 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,  
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { auth } from "../../services/firebase";
 
-
-WebBrowser.maybeCompleteAuthSession();
-
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 const isLargeScreen = width > 768;
 
 export default function Signup() {
-  const navigation = useNavigation<any>();
-
+  const router = useRouter();
+  
   // States
-  const[username, setUsername] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ---------------- GOOGLE AUTH ---------------- */
-const [request, response, promptAsync] = Google.useAuthRequest({
-  webClientId: "270825751134-fcfspm30u9qv9tipdkg4471ge37ujg6q.apps.googleusercontent.com",
-  androidClientId: "ANDROID_CLIENT_ID.apps.googleusercontent.com",
-});
-
-
-useEffect(() => {
-  if (response?.type === "success") {
-    const { idToken } = response.authentication || {};
-
-    if (!idToken) {
-      Alert.alert("Error", "Google ID token not found");
-      return;
-    }
-
-    const credential = GoogleAuthProvider.credential(idToken);
-
-    signInWithCredential(auth, credential)
-      .then(() => {
-        Alert.alert("Success", "Signed in with Google");
-      })
-      .catch((error) => {
-        console.log(error);
-        Alert.alert("Error", "Google sign-in failed");
-      });
-  }
-}, [response]);
-
-
-  /* ---------------- EMAIL SIGNUP ---------------- */
   const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
+    // Validation
+    if (!username || !email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
@@ -77,22 +42,21 @@ useEffect(() => {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert("Error", "Password should be at least 6 characters.");
-      return;
-    }
-
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // 1. Firebase හරහා Account එක සෑදීම
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. User ගේ Full Name එක Profile එකට එකතු කිරීම
+      await updateProfile(userCredential.user, {
+        displayName: username
+      });
+
       Alert.alert("Success", "Account created successfully!");
+      // _layout.tsx මගින් auto-redirect වනු ඇත
     } catch (error: any) {
       let errorMessage = "Signup failed!";
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "That email address is already in use!";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "That email address is invalid!";
-      }
+      if (error.code === 'auth/email-already-in-use') errorMessage = "Email already in use!";
       Alert.alert("Signup Error", errorMessage);
     } finally {
       setLoading(false);
@@ -100,92 +64,96 @@ useEffect(() => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
 
-          {/* IMAGE SECTION */}
+          {/* --- Image Section --- */}
           <View style={styles.imageSection}>
-            <Image
-              source={{ uri: "https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?w=800&q=80" }}
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?w=600&q=70' }} // Speed එක සඳහා resolution අඩු කර ඇත
               style={styles.workImage}
             />
             <View style={styles.imageOverlay}>
               <Text style={styles.overlayTitle}>Start Your Journey</Text>
-              <Text style={styles.overlayText}>
-                Create an account to explore thousands of career opportunities.
-              </Text>
+              <Text style={styles.overlayText}>Explore career opportunities.</Text>
             </View>
           </View>
 
-          {/* FORM SECTION */}
+          {/* --- Form Section --- */}
           <View style={styles.formSection}>
-            <Text style={styles.welcomeTitle}>Create Account</Text>                                                                                                                                                                                                                                                                                               
-            <Text style={styles.subTitle}>Join our community today</Text>
-
-            <TextInput
-              placeholder="Username"
-              style={styles.input}
-              onChangeText={setUsername}
-              value={username}
-            />
- 
-
-            <TextInput
-              placeholder="Email"
-              style={styles.input}
-              onChangeText={setEmail}
-              value={email}
-              autoCapitalize="none"
-            />
-
-            <TextInput
-              placeholder="Password"
-              secureTextEntry
-              style={styles.input}
-              onChangeText={setPassword}
-              value={password}
-            />
-
-            <TextInput
-              placeholder="Confirm Password"
-              secureTextEntry
-              style={styles.input}
-              onChangeText={setConfirmPassword}
-              value={confirmPassword}
-            />
-
-            <TouchableOpacity
-              onPress={handleSignup}
-              style={[styles.signupBtn, loading && styles.disabledBtn]}
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator color="white" /> : <Text style={styles.signupBtnText}>CREATE ACCOUNT</Text>}
-            </TouchableOpacity>
-
-            {/* SOCIAL LOGIN ROW */}
-            <View style={styles.socialRow}>
-              <TouchableOpacity onPress={() => promptAsync()}>
-                <Image source={require("../../assets/google.png")} style={styles.socialIcon} />
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => Alert.alert("Info", "Facebook login coming soon")}>
-                <Image source={require("../../assets/facebook.png")} style={styles.socialIcon} />
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => Alert.alert("Info", "LinkedIn login coming soon")}>
-                <Image source={require("../../assets/linkedin.png")} style={styles.socialIcon} />
-              </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.welcomeTitle}>Create Account</Text>
+              <Text style={styles.subTitle}>Join our community today</Text>
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate("login")}>
-              <Text style={styles.footerText}>
-                Already have an account? <Text style={styles.linkBlue}>Login</Text>
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.inputGroup}>
+              {/* Full Name Input */}
+              <TextInput 
+                placeholder="Full Name" 
+                style={styles.input}
+                onChangeText={setUsername}
+                value={username}
+              />
+
+              {/* Email Input */}
+              <TextInput 
+                placeholder="Email Address" 
+                style={styles.input}
+                onChangeText={setEmail}
+                value={email}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+
+              {/* Password Input */}
+              <TextInput 
+                placeholder="Password" 
+                secureTextEntry 
+                style={styles.input}
+                onChangeText={setPassword}
+                value={password}
+              />
+
+              {/* Confirm Password Input */}
+              <TextInput 
+                placeholder="Confirm Password" 
+                secureTextEntry 
+                style={styles.input}
+                onChangeText={setConfirmPassword}
+                value={confirmPassword}
+              />
+              
+              {/* Signup Button */}
+              <TouchableOpacity 
+                onPress={handleSignup} 
+                style={[styles.signupBtn, loading && styles.disabledBtn]}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.signupBtnText}>CREATE ACCOUNT</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Google Button (Optional UI) */}
+              <TouchableOpacity style={styles.googleBtn}>
+                 <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/300/300221.png' }} style={styles.googleIcon} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => router.push("/login")} 
+                style={styles.loginLink}
+              >
+                <Text style={styles.footerText}>
+                  Already have an account? <Text style={styles.linkBlue}>Login</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
         </View>
@@ -194,54 +162,61 @@ useEffect(() => {
   );
 }
 
-/* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F0F4F8" },
-  scrollContainer: { flexGrow: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  container: { flex: 1, backgroundColor: '#F0F4F8' },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   card: {
-    backgroundColor: "white",
-    width: isLargeScreen ? "85%" : "100%",
-    flexDirection: isLargeScreen ? "row" : "column",
-    borderRadius: 25,
-    overflow: "hidden",
+    backgroundColor: 'white',
+    width: isLargeScreen ? '85%' : '100%',
+    maxWidth: 1100,
+    flexDirection: isLargeScreen ? 'row' : 'column',
+    borderRadius: 30,
+    overflow: 'hidden',
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
   },
-  imageSection: { flex: 1.3, height: isLargeScreen ? "auto" : 200 },
-  workImage: { width: "100%", height: "100%" },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,88,204,0.5)",
-    justifyContent: "center",
-    padding: 30,
-  },
-  overlayTitle: { color: "white", fontSize: 28, fontWeight: "bold" },
-  overlayText: { color: "white", marginTop: 8 },
-  formSection: { flex: 1, padding: 30 },
-  welcomeTitle: { fontSize: 26, fontWeight: "bold", color: "#003366" },
-  subTitle: { color: "#64748B", marginBottom: 20 },
+  imageSection: { flex: isLargeScreen ? 1.2 : 0, height: isLargeScreen ? 'auto' : 220, position: 'relative' },
+  workImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  imageOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 51, 102, 0.4)', justifyContent: 'center', padding: 25 },
+  overlayTitle: { color: 'white', fontSize: 26, fontWeight: 'bold' },
+  overlayText: { color: 'white', fontSize: 14, marginTop: 5 },
+  formSection: { flex: 1, padding: 30, justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  headerTextContainer: { marginBottom: 25, alignItems: 'center' },
+  welcomeTitle: { fontSize: 28, fontWeight: 'bold', color: '#003366' },
+  subTitle: { color: '#64748B', marginTop: 5, fontSize: 16 },
+  inputGroup: { width: '100%' },
   input: {
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 12,
-    padding: 14,
+    borderColor: '#E2E8F0',
+    borderRadius: 15,
+    padding: 16,
     marginBottom: 15,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: '#F8FAFC',
+    fontSize: 16,
   },
   signupBtn: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
+    backgroundColor: '#A0C4FF', // Light blue (ඔයාගේ screenshot එකේ විදියට)
+    padding: 18,
+    borderRadius: 15,
+    alignItems: 'center',
     marginTop: 10,
   },
-  disabledBtn: { backgroundColor: "#A0C4FF" },
-  signupBtnText: { color: "white", fontWeight: "bold" },
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-    gap: 20,
+  disabledBtn: { opacity: 0.6 },
+  signupBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  googleBtn: {
+    marginTop: 20,
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 50,
+    width: 60,
+    alignSelf: 'center'
   },
-  socialIcon: { width: 40, height: 40 },
-  footerText: { textAlign: "center", color: "#64748B" },
-  linkBlue: { color: "#007AFF", fontWeight: "bold" },
+  googleIcon: { width: 30, height: 30 },
+  loginLink: { marginTop: 25, alignItems: 'center' },
+  footerText: { color: '#64748B', fontSize: 15 },
+  linkBlue: { color: '#007AFF', fontWeight: 'bold' },
 });
