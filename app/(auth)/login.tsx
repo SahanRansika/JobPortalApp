@@ -15,6 +15,7 @@ import {
   View
 } from "react-native";
 import { auth } from "../../services/firebase";
+import { router } from "expo-router";
 
 const { width } = Dimensions.get('window');
 const isLargeScreen = width > 768;
@@ -35,7 +36,8 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // Firebase automatically updates the auth state listener
-      alert("Welcome back!");
+      alert("Welcome to JobPortalApp!🎉");
+      router.replace('/home');
     } catch (error: any) {
       let errorMessage = "Login failed!";
       if (error.code === 'auth/user-not-found') errorMessage = "No user found with this email.";
@@ -62,7 +64,7 @@ export default function Login() {
               style={styles.workImage}
             />
             <View style={styles.imageOverlay}>
-              <Text style={styles.overlayTitle}>Welcome Back</Text>
+              <Text style={styles.overlayTitle}>Welcome to JobPortalApp!🎉</Text>
               <Text style={styles.overlayText}>Log in to continue your journey and manage your applications.</Text>
             </View>
           </View>

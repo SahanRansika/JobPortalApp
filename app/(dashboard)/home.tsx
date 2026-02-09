@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dimensions, FlatList, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { getJobs } from "../../services/jobService";
 import { push } from "expo-router/build/global-state/routing";
+import { auth } from "@/services/firebase";
 
 const { width } = Dimensions.get('window');
 const isTablet = width > 768;
@@ -28,12 +29,7 @@ export default function Home() {
         </View>
 
         <View style={styles.navRight}>
-          <TouchableOpacity style={styles.loginBtn} onPress={() => push('login' as never)} >
-            <Text style={styles.loginText}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.signupBtn} onPress={() => push('signup' as never)} >
-            <Text style={styles.signupText}>Signup</Text>
-          </TouchableOpacity>
+           <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
         </View>
       </View>
 
@@ -140,7 +136,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     alignItems: 'center',
   },
-  exploreBtnText: { color: '#007AFF', fontWeight: 'bold' },
+  exploreBtnText: { color: '#007AFF', fontWeight: 'bold' }
+  ,userEmail: { fontSize: 14, color: '#0073ff', marginTop: 2, opacity: 0.9 },
+  userName: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 10 },
 
   // List Section Styles
   sectionHeader: {

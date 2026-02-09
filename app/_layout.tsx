@@ -1,19 +1,13 @@
-import { Slot } from "expo-router"
-import React from "react"
-import { View } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
-import {LoaderProvider} from "@/context/LoaderContext"
+import { Slot } from "expo-router";
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const RootLayout = () => {
-  const insets = useSafeAreaInsets()
-  console.log(insets)
+export default function RootLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <LoaderProvider>
-      <View style={{ marginTop: insets.top, flex: 1 }}>
-        <Slot />
-      </View>
-    </LoaderProvider>
-  )
+    <View style={{ flex: 1, marginTop: insets.top }}>
+      <Slot />
+    </View>
+  );
 }
-
-export default RootLayout

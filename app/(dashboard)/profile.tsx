@@ -158,9 +158,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: '#fff'
-  },
+  },userEmail: { fontSize: 14, color: '#f0f0f0', marginTop: 2, opacity: 0.9 },
   userName: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 10 },
-  userEmail: { fontSize: 14, color: '#f0f0f0', marginTop: 2, opacity: 0.9 },
+  
   
   statsContainer: { 
     flexDirection: 'row', 
