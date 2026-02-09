@@ -1,21 +1,43 @@
 import { Tabs } from "expo-router";
-import { Ionicons, AntDesign } from "@expo/vector-icons"; // AntDesign import කරන්න
+import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
+import { useEffect, useState } from "react";
+import { auth, db } from "../../services/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function TabsLayout() {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setRole(userDoc.data().role); // 'admin' හෝ 'recruiter' හෝ 'user' ලබා ගනී
+        }
+      }
+    };
+    checkUserRole();
+  }, []);
+
+  // අවසර පරීක්ෂා කිරීම්
+  const isAdmin = role === 'admin';
+  const canPostJob = role === 'admin' || role === 'recruiter';
+
   return (
     <Tabs screenOptions={{ 
       tabBarActiveTintColor: "#007AFF",
       headerShown: false,
       tabBarStyle: { 
-        height: Platform.OS === 'ios' ? 90 : 95, 
-        paddingBottom: Platform.OS === 'ios' ? 30 : 12,
+        height: Platform.OS === 'ios' ? 90 : 75, 
+        paddingBottom: Platform.OS === 'ios' ? 30 : 15,
         paddingTop: 10,
         position: 'absolute',
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
         backgroundColor: '#ffffff',
-        elevation: 15,
+        elevation: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -3 },
         shadowOpacity: 0.1,
@@ -30,20 +52,28 @@ export default function TabsLayout() {
         }}
       />
       
-      {/* Show Job සඳහා AntDesign Icon එක ඇතුළත් කිරීම */}
       <Tabs.Screen
         name="show-job"
+        options={{ href: null }} // Tab bar එකේ පෙන්වන්නේ නැත
+      />
+
+      {/* Admin ට පමණක් පෙනෙන 'Manage Roles' (Add Recruiter) පිටුව */}
+      <Tabs.Screen
+        name="add-recruiter"
         options={{
-          title: "View Jobs",
-          tabBarIcon: ({ color }) => <AntDesign name="appstore-add" size={24} color={color} />,
+          title: "Admin",
+          href: isAdmin ? "/add-recruiter" : null,
+          tabBarIcon: ({ color }) => <Ionicons name="shield-checkmark-outline" size={24} color={color} />,
         }}
       />
 
+      {/* Admin සහ Recruiter දෙදෙනාටම පෙනෙන 'Post Job' පිටුව */}
       <Tabs.Screen
         name="create-job"
         options={{
-          title: "Create Post",
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={30} color={color} />,
+          title: "Post Job",
+          href: canPostJob ? "/create-job" : null,
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={28} color={color} />,
         }}
       />
 

@@ -15,7 +15,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { auth } from "../../services/firebase";
+import { auth, db } from "../../services/firebase"; // db සහ auth import කරන්න
+import { doc, setDoc } from "firebase/firestore"; // Firestore functions
 
 const { width } = Dimensions.get('window');
 const isLargeScreen = width > 768;
@@ -31,7 +32,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    // 1. Validation (හිස්ව තිබේදැයි පරීක්ෂා කිරීම)
+    // 1. Validation
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
@@ -46,13 +47,23 @@ export default function Signup() {
     try {
       // 2. Firebase Auth හරහා Account එක සෑදීම
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       
-      // 3. පරිශීලකයාගේ Full Name එක (Username) Profile එකට එකතු කිරීම
-      await updateProfile(userCredential.user, {
+      // 3. පරිශීලකයාගේ Full Name එක Profile එකට එකතු කිරීම
+      await updateProfile(user, {
         displayName: username
       });
 
-      // 4. සාර්ථකව අවසන් වූ පසු Home Page එකට Redirect කිරීම
+      // 4. Firestore හි පරිශීලක දත්ත සහ Role එක (user) තැන්පත් කිරීම
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        username: username,
+        email: email,
+        role: "user", // Default role එක user ලෙස පවතී
+        createdAt: new Date().toISOString()
+      });
+
+      // 5. සාර්ථකව අවසන් වූ පසු Home Page එකට Redirect කිරීම
       Alert.alert(
         "Success", 
         "Account created successfully!",
@@ -67,7 +78,6 @@ export default function Signup() {
     } catch (error: any) {
       let errorMessage = "Signup failed!";
       
-      // Firebase Error Messages පහසුවෙන් හඳුනා ගැනීමට
       if (error.code === 'auth/email-already-in-use') errorMessage = "This email is already registered.";
       if (error.code === 'auth/invalid-email') errorMessage = "Please enter a valid email address.";
       if (error.code === 'auth/weak-password') errorMessage = "Password should be at least 6 characters.";
@@ -150,7 +160,7 @@ export default function Signup() {
                 )}
               </TouchableOpacity>
 
-              {/* Google Icon UI */}
+              {/* Google Button UI */}
               <TouchableOpacity style={styles.googleBtn}>
                  <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/300/300221.png' }} style={styles.googleIcon} />
               </TouchableOpacity>
@@ -206,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   signupBtn: {
-    backgroundColor: '#A0C4FF', // ඔයාගේ screenshot එකේ ඇති පාට
+    backgroundColor: '#A0C4FF', 
     padding: 18,
     borderRadius: 15,
     alignItems: 'center',
