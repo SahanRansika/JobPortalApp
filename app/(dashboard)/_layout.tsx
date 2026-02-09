@@ -3,22 +3,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../services/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 export default function TabsLayout() {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkUserRole = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role); // 'admin' හෝ 'recruiter' හෝ 'user' ලබා ගනී
+    const user = auth.currentUser;
+    if (user) {
+      // Real-time role check එකක් දාමු, එතකොට Admin කෙනෙක් role එක change කරපු ගමන් Tabs ටිකත් update වෙනවා
+      const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
+        if (doc.exists()) {
+          setRole(doc.data().role);
         }
-      }
-    };
-    checkUserRole();
+      });
+      return () => unsubscribe();
+    }
   }, []);
 
   // අවසර පරීක්ෂා කිරීම්
@@ -51,20 +51,19 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
         }}
       />
+
+      {/* හැමෝටම පෙනෙන Community Feedback පිටුව */}
+      <Tabs.Screen
+        name="feedbacks"
+        options={{
+          title: "Community",
+          tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={24} color={color} />,
+        }}
+      />
       
       <Tabs.Screen
         name="show-job"
         options={{ href: null }} // Tab bar එකේ පෙන්වන්නේ නැත
-      />
-
-      {/* Admin ට පමණක් පෙනෙන 'Manage Roles' (Add Recruiter) පිටුව */}
-      <Tabs.Screen
-        name="add-recruiter"
-        options={{
-          title: "Admin",
-          href: isAdmin ? "/add-recruiter" : null,
-          tabBarIcon: ({ color }) => <Ionicons name="shield-checkmark-outline" size={24} color={color} />,
-        }}
       />
 
       {/* Admin සහ Recruiter දෙදෙනාටම පෙනෙන 'Post Job' පිටුව */}
@@ -74,6 +73,16 @@ export default function TabsLayout() {
           title: "Post Job",
           href: canPostJob ? "/create-job" : null,
           tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={28} color={color} />,
+        }}
+      />
+
+      {/* Admin ට පමණක් පෙනෙන 'Manage Roles' (Add Recruiter) පිටුව */}
+      <Tabs.Screen
+        name="add-recruiter"
+        options={{
+          title: "Admin",
+          href: isAdmin ? "/add-recruiter" : null,
+          tabBarIcon: ({ color }) => <Ionicons name="shield-checkmark-outline" size={24} color={color} />,
         }}
       />
 
