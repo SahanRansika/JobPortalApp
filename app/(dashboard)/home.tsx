@@ -124,7 +124,8 @@ export default function Home() {
                 company: item.company,
                 salary: item.salary,
                 description: item.description,
-                imageUrl: item.imageUrl 
+                imageUrl: item.imageUrl,
+                postedBy: item.postedBy
               }
             } as any)}
           >

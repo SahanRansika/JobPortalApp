@@ -1,212 +1,213 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
-  Image, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  Dimensions,
-  Alert,
-  ActivityIndicator,
-  Platform
+  Image, ScrollView, StyleSheet, Text, TouchableOpacity, 
+  View, Alert, ActivityIndicator 
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { applyForJob } from "../../services/jobService";
-import { auth } from "../../services/firebase";
-
-const { width } = Dimensions.get("window");
+import * as DocumentPicker from "expo-document-picker";
+import { applyForJob, uploadCV } from "../../services/jobService";
+import { auth, db } from "../../services/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function JobDetails() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [isApplying, setIsApplying] = useState(false);
+  const [selectedCV, setSelectedCV] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string>("");
 
-  // Params හරහා එන දත්ත ලබා ගැනීම
-  const { id, title, company, salary, description, imageUrl } = params;
+  // Params වලින් දත්ත ලබා ගැනීම
+  const { id, title, company, salary, description, imageUrl, postedBy } = params;
 
-  // --- Apply Logic ---
+  const currentUser = auth.currentUser;
+  
+  // recruiterId එක undefined වීම වැළැක්වීමට safe string එකක් ලෙස ගැනීම
+  const recruiterIdStr = (postedBy as string) || "";
+  const isOwner = currentUser?.uid === recruiterIdStr;
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role);
+          }
+        } catch (e) {
+          console.error("Role fetch error:", e);
+        }
+      }
+    };
+    fetchUserRole();
+  }, [currentUser]);
+
+  // අයිතිකරුට හෝ Admin ට විශේෂ අවසර (View Applications බටන් එක පෙන්වීමට)
+  const isPrivileged = isOwner || userRole === "admin";
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled) {
+        setSelectedCV(result.assets[0]);
+      }
+    } catch (err) {
+      Alert.alert("Error", "Failed to pick document");
+    }
+  };
+
   const handleApply = async () => {
-    const user = auth.currentUser;
-
-    if (!user) {
-      Alert.alert("Login Required", "Please login to apply for this job.");
-      return;
+    if (!currentUser) return Alert.alert("Error", "Please login first.");
+    if (!selectedCV) return Alert.alert("Error", "Please select a CV.");
+    
+    // වැදගත්: recruiterId එක නැත්නම් apply කිරීම නැවැත්වීම
+    if (!recruiterIdStr) {
+      return Alert.alert("Error", "Recruiter information is missing for this job.");
     }
 
-    Alert.alert(
-      "Confirm Application",
-      `Do you want to apply for the ${title} position at ${company}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Apply",
-          onPress: async () => {
-            setIsApplying(true);
-            try {
-              await applyForJob({
-                jobId: id,
-                jobTitle: title,
-                companyName: company,
-                applicantEmail: user.email,
-                applicantName: user.displayName || user.email?.split('@')[0],
-                status: "Pending",
-              });
-              Alert.alert("Success!", "Your application has been submitted.");
-            } catch (error) {
-              Alert.alert("Error", "Failed to submit application. Try again.");
-            } finally {
-              setIsApplying(false);
-            }
-          }
-        }
-      ]
-    );
+    setIsApplying(true);
+    try {
+      // 1. CV එක Cloudinary වෙත upload කිරීම
+      const cvUrl = await uploadCV(selectedCV.uri, selectedCV.name);
+      
+      // 2. Job එකට Apply කිරීම (දැන් applicantId ද ඇතුළත් වේ)
+      await applyForJob({
+        jobId: id as string,
+        jobTitle: title as string,
+        companyName: company as string,
+        applicantEmail: currentUser.email,
+        applicantName: currentUser.displayName || "User",
+        applicantId: currentUser.uid, // <--- TypeScript error එක මෙතැනින් විසඳේ
+        cvUrl: cvUrl,
+        status: "Pending",
+        recruiterId: recruiterIdStr,
+      });
+
+      Alert.alert("Success", "Application sent successfully!");
+      router.back();
+    } catch (error: any) {
+      console.error("Apply Error:", error);
+      Alert.alert("Error", "Application failed. Please try again.");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        
-        {/* --- Job Banner Image --- */}
+      {/* --- Header Section --- */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#0F172A" />
+        </TouchableOpacity>
+
+        {isPrivileged ? (
+          <TouchableOpacity 
+            style={styles.viewAppsBtn} 
+            onPress={() => router.push({ pathname: "/view-applications", params: { jobId: id } })}
+          >
+            <Ionicons name="people-outline" size={20} color="#fff" />
+            <Text style={styles.viewAppsText}>Applications</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.topApplyBtn, (isApplying || !selectedCV) && styles.disabledBtn]} 
+            onPress={handleApply}
+            disabled={isApplying || !selectedCV}
+          >
+            {isApplying ? <ActivityIndicator color="#fff" /> : <Text style={styles.topApplyBtnText}>Apply Now</Text>}
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
+        {/* Banner Image */}
         <View style={styles.imageContainer}>
           <Image 
             source={{ uri: (imageUrl as string) || 'https://via.placeholder.com/800x400' }} 
-            style={styles.bannerImage}
+            style={styles.bannerImage} 
             resizeMode="cover"
           />
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
-          {/* --- Job Title & Company --- */}
           <Text style={styles.title}>{title}</Text>
           <View style={styles.companyRow}>
             <Ionicons name="business-outline" size={20} color="#64748B" />
             <Text style={styles.companyName}>{company}</Text>
           </View>
-
-          {/* --- Salary Badge --- */}
+          
           <View style={styles.salaryBadge}>
             <Text style={styles.salaryText}>💰 LKR {salary} / Month</Text>
           </View>
 
           <View style={styles.divider} />
 
-          {/* --- Description --- */}
-          <Text style={styles.sectionTitle}>About the Role</Text>
-          <Text style={styles.descriptionText}>
-            {description || "Detailed description not available for this role."}
-          </Text>
+          {/* CV Picker Section (Hide for Admin/Owner) */}
+          {!isPrivileged && (
+            <View>
+              <Text style={styles.sectionTitle}>Attach Your CV</Text>
+              <TouchableOpacity 
+                style={[styles.cvPicker, selectedCV && styles.cvSelected]} 
+                onPress={pickDocument}
+              >
+                <Ionicons 
+                  name={selectedCV ? "checkmark-circle" : "document-attach-outline"} 
+                  size={24} 
+                  color={selectedCV ? "#10B981" : "#007AFF"} 
+                />
+                <Text style={[styles.cvPickerText, selectedCV && { color: "#10B981" }]}>
+                  {selectedCV ? selectedCV.name : "Select PDF CV"}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.divider} />
+            </View>
+          )}
 
-          {/* --- Quick Info --- */}
-          <View style={styles.infoGrid}>
-            <View style={styles.infoCard}>
-              <Ionicons name="briefcase-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoLabel}>Job Type</Text>
-              <Text style={styles.infoValue}>Full-time</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Ionicons name="globe-outline" size={22} color="#007AFF" />
-              <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoValue}>Remote / SL</Text>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Job Description</Text>
+          <Text style={styles.descriptionText}>{description}</Text>
         </View>
       </ScrollView>
-
-      {/* --- Bottom Footer with Apply Button --- */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.applyBtn, isApplying && styles.disabledBtn]} 
-          onPress={handleApply}
-          disabled={isApplying}
-        >
-          {isApplying ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.applyBtnText}>Apply Now</Text>
-          )}
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  imageContainer: { width: "100%", height: 260, position: "relative" },
+  topHeader: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 110,
+    backgroundColor: '#fff', flexDirection: 'row', alignItems: 'flex-end',
+    justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 15, zIndex: 10,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
+  iconBtn: { padding: 8, backgroundColor: '#F1F5F9', borderRadius: 12 },
+  viewAppsBtn: {
+    backgroundColor: "#10B981", flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 15, paddingVertical: 10, borderRadius: 12, gap: 8
+  },
+  viewAppsText: { color: "#fff", fontWeight: "bold" },
+  topApplyBtn: { backgroundColor: "#007AFF", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
+  topApplyBtnText: { color: "#fff", fontWeight: "bold" },
+  disabledBtn: { backgroundColor: "#CBD5E1" },
+  scrollPadding: { paddingTop: 110, paddingBottom: 40 },
+  imageContainer: { width: "100%", height: 230 },
   bannerImage: { width: "100%", height: "100%" },
-  backButton: { 
-    position: "absolute", 
-    top: 50, 
-    left: 20, 
-    backgroundColor: "rgba(0,0,0,0.4)", 
-    padding: 10, 
-    borderRadius: 25 
+  content: { padding: 25 },
+  title: { fontSize: 24, fontWeight: "bold", color: "#1E293B" },
+  companyRow: { flexDirection: "row", alignItems: "center", marginVertical: 8 },
+  companyName: { fontSize: 17, color: "#64748B", marginLeft: 8 },
+  salaryBadge: { backgroundColor: "#E0F2FE", padding: 10, borderRadius: 10, alignSelf: "flex-start", marginTop: 10 },
+  salaryText: { color: "#007AFF", fontWeight: "bold" },
+  divider: { height: 1, backgroundColor: "#F1F5F9", marginVertical: 25 },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
+  descriptionText: { fontSize: 15, color: "#475569", lineHeight: 24 },
+  cvPicker: {
+    flexDirection: 'row', alignItems: 'center', padding: 16,
+    borderWidth: 1.5, borderColor: '#007AFF', borderStyle: 'dashed', borderRadius: 15,
   },
-  content: { 
-    padding: 25, 
-    borderTopLeftRadius: 30, 
-    borderTopRightRadius: 30, 
-    marginTop: -35, 
-    backgroundColor: "#fff",
-    minHeight: 500 
-  },
-  title: { fontSize: 26, fontWeight: "bold", color: "#0F172A", marginBottom: 10 },
-  companyRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  companyName: { fontSize: 17, color: "#64748B", marginLeft: 8, fontWeight: "500" },
-  salaryBadge: { 
-    backgroundColor: "#E0F2FE", 
-    paddingHorizontal: 18, 
-    paddingVertical: 12, 
-    borderRadius: 14, 
-    alignSelf: "flex-start",
-    marginBottom: 25
-  },
-  salaryText: { color: "#007AFF", fontWeight: "bold", fontSize: 17 },
-  divider: { height: 1.5, backgroundColor: "#F1F5F9", marginBottom: 25 },
-  sectionTitle: { fontSize: 19, fontWeight: "bold", color: "#1E293B", marginBottom: 12 },
-  descriptionText: { fontSize: 15, color: "#475569", lineHeight: 25, marginBottom: 25 },
-  infoGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 120 },
-  infoCard: { 
-    backgroundColor: "#F8FAFC", 
-    width: (width - 70) / 2, 
-    padding: 20, 
-    borderRadius: 20, 
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E2E8F0"
-  },
-  infoLabel: { fontSize: 12, color: "#94A3B8", marginTop: 8 },
-  infoValue: { fontSize: 15, fontWeight: "bold", color: "#1E293B", marginTop: 4 },
-  footer: { 
-    position: "absolute", 
-    bottom: 0, 
-    width: "100%", 
-    padding: 20, 
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20
-  },
-  applyBtn: { 
-    backgroundColor: "#007AFF", 
-    paddingVertical: 18, 
-    borderRadius: 16, 
-    alignItems: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6
-  },
-  disabledBtn: { backgroundColor: "#94A3B8" },
-  applyBtnText: { color: "#fff", fontSize: 18, fontWeight: "bold" }
+  cvSelected: { borderColor: '#10B981', backgroundColor: '#F0FDF4', borderStyle: 'solid' },
+  cvPickerText: { marginLeft: 10, fontSize: 16, color: '#007AFF', fontWeight: '600' },
 });

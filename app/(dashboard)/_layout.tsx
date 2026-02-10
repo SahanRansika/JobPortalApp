@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../services/firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 
 export default function TabsLayout() {
   const [role, setRole] = useState<string | null>(null);
@@ -11,39 +11,41 @@ export default function TabsLayout() {
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
-      // Real-time role check එකක් දාමු, එතකොට Admin කෙනෙක් role එක change කරපු ගමන් Tabs ටිකත් update වෙනවා
-      const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
-        if (doc.exists()) {
-          setRole(doc.data().role);
+      // පරිශීලකයාගේ Role එක (admin/recruiter/user) Real-time පරීක්ෂා කිරීම
+      const unsubscribe = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          setRole(docSnap.data().role);
         }
       });
       return () => unsubscribe();
     }
   }, []);
 
-  // අවසර පරීක්ෂා කිරීම්
+  // අවසර පරීක්ෂා කිරීම් (Permission Checks)
   const isAdmin = role === 'admin';
   const canPostJob = role === 'admin' || role === 'recruiter';
 
   return (
     <Tabs screenOptions={{ 
       tabBarActiveTintColor: "#007AFF",
+      tabBarInactiveTintColor: "#64748B",
       headerShown: false,
       tabBarStyle: { 
-        height: Platform.OS === 'ios' ? 90 : 75, 
-        paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+        height: Platform.OS === 'ios' ? 90 : 70, 
+        paddingBottom: Platform.OS === 'ios' ? 30 : 12,
         paddingTop: 10,
         position: 'absolute',
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
         backgroundColor: '#ffffff',
-        elevation: 20,
+        elevation: 25,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
+        shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.1,
-        shadowRadius: 10,
+        shadowRadius: 12,
       }
     }}>
+      {/* 1. Home Tab */}
       <Tabs.Screen
         name="home"
         options={{
@@ -52,7 +54,15 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* හැමෝටම පෙනෙන Community Feedback පිටුව */}
+      {/* 2. Inboxes (Menu එකෙන් සඟවා ඇත, නමුත් Navigate කළ හැක) */}
+      <Tabs.Screen
+        name="view-applications"
+        options={{
+          href: null, // bottom bar එකෙන් අයින් කිරීමට
+        }}
+      />
+
+      {/* 3. Community / Feedbacks Tab */}
       <Tabs.Screen
         name="feedbacks"
         options={{
@@ -61,12 +71,15 @@ export default function TabsLayout() {
         }}
       />
       
+      {/* 4. Show Job Details (Menu එකෙන් සඟවා ඇත) */}
       <Tabs.Screen
         name="show-job"
-        options={{ href: null }} // Tab bar එකේ පෙන්වන්නේ නැත
+        options={{ 
+          href: null 
+        }} 
       />
 
-      {/* Admin සහ Recruiter දෙදෙනාටම පෙනෙන 'Post Job' පිටුව */}
+      {/* 5. Create Job (Admin සහ Recruiter ට පමණක් පෙනේ) */}
       <Tabs.Screen
         name="create-job"
         options={{
@@ -76,7 +89,7 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Admin ට පමණක් පෙනෙන 'Manage Roles' (Add Recruiter) පිටුව */}
+      {/* 6. Admin Panel (Admin ට පමණක් පෙනේ) */}
       <Tabs.Screen
         name="add-recruiter"
         options={{
@@ -86,6 +99,7 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* 7. Profile Tab */}
       <Tabs.Screen
         name="profile"
         options={{
