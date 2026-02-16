@@ -73,3 +73,6 @@ Me application eken users la ta:
 - npx expo install expo-router
 - npm install nativewind
 
+**Install app link:**
+- https://expo.dev/artifacts/eas/3SqhhShBtJnPMCSWp9PNZm.aab
+
